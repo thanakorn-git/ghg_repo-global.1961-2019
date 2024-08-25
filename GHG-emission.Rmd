@@ -1,0 +1,104 @@
+#INTERACTIVE PLOT
+
+```{r}
+library(shiny)
+library(tidyverse)
+library(plotly)
+library(readxl)
+
+data_gas <- read_excel("GHG-emission-gas.xlsx") %>%
+  select(-`Year(B.E.)`) %>%
+  rename(Year = `Year(C.E.)`)
+
+
+# UI
+ui <- fluidPage(
+  titlePanel("Thailand GHG Emissions Dashboard"),
+  sidebarLayout(
+    sidebarPanel(
+      selectInput("sector", "Choose a Sector:",
+                  choices = unique(data_gas$Sector)),
+      
+      selectInput("gas", "Choose a Gas Type:",
+                  choices = unique(data_gas$Gases_Type)),
+      
+      sliderInput("year_range", "Select Year Range:",
+                  min = min(data_gas$Year), 
+                  max = max(data_gas$Year),
+                  value = c(min(data_gas$Year),
+                            max(data_gas$Year)),
+                  step = 1, sep = "")
+    ),
+    mainPanel(
+      plotlyOutput("time_series_plot"),
+      plotlyOutput("emissions_by_gas_plot")
+    )
+  )
+)
+
+# Server
+server <- function(input, output) {
+  
+      filtered_data <- reactive({
+      data_gas %>%
+      filter(Sector == input$sector,
+             Year >= input$year_range[1] & Year <= input$year_range[2])
+  })
+  
+  output$time_series_plot <- renderPlotly({
+    plot_ly(filtered_data(), 
+            x = ~Year, 
+            y = ~Emission, color = ~Gases_Type, 
+            type = 'scatter', 
+            mode = 'lines+markers') %>%
+      
+            layout(title = paste("Emissions for", 
+                           input$sector, "sector"),
+             xaxis = list(title = "Year"),
+             yaxis = list(title = "Emission (GgCO2eq)"))
+  })
+  
+  output$emissions_by_gas_plot <- renderPlotly({
+    gas_data <- filtered_data() %>%
+      group_by(Gases_Type) %>%
+      summarise(TotalEmission = sum(Emission))
+    
+    plot_ly(gas_data, 
+            labels = ~Gases_Type, 
+            values = ~TotalEmission, 
+            type = 'pie') %>%
+      layout(title = "Distribution of Emissions by Gas Type")
+  })
+}
+
+# Run the app
+shinyApp(ui = ui, server = server)
+```
+
+# Comparison of Emission Intensity by Gas Type
+
+```{r}
+library(ggplot2)
+
+# Summarize total emissions by year and gas type
+emissions_by_gas_year <- data_gas %>%
+  
+  group_by(Year, Gases_Type) %>%
+  summarize(Total_Emission = sum(Emission, na.rm = TRUE))
+
+
+
+# Line plot showing trend of emissions by gas type
+ggplot(emissions_by_gas_year, 
+       aes(x = Year, 
+           y = Total_Emission, 
+           color = Gases_Type)) +
+  geom_line(size = 1.2) +
+  labs(title = "GHG Emissions Trend by Gas Type 2000-2019",
+       x = "Year", 
+       y = "Total Emissions (GgCO2eq)") +
+  theme_minimal() + 
+  theme(panel.grid = element_line(color="grey", 
+                                  linetype="dotted"))
+
+```

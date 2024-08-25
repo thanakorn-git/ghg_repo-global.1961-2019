@@ -1,0 +1,80 @@
+```{r}
+library(dplyr)
+library(ggplot2)
+library(leaflet)
+library(readxl)
+```
+
+```{r}
+library(rnaturalearth)
+library(sf)
+
+# Download country boundaries
+world <- ne_countries(scale = "medium", 
+                      returnclass = "sf")
+
+st_write(world, 
+         "world_countries.geojson", 
+         driver = "GeoJSON")
+
+```
+
+```{r}
+# Load spatial data (replace with your actual file path)
+world_map <- st_read("world_countries.geojson")
+
+# Assuming 'Area' column in emissions_data corresponds to country names
+emissions_data <- read_excel("FAOSTAT_data.xlsx")
+
+# Join emissions data with spatial data
+map_data <- world_map %>%
+            left_join(emissions_data, by = c("country_column" = "Area"))
+
+```
+
+##Plot Greenhouse gas emissions data in CO2 equivalent (CO2eq) units for each country in 2019
+
+##Coding Expalination: Data Preparation: The code filters the emissions data for CO2eq emissions in 2019. GeoJSON Loading: The geographical boundaries are loaded from a GeoJSON file. Data Merging: The emissions data is merged with the geographical boundaries. Interactive Map: leaflet is used to create an interactive map where the color represents the intensity of emissions.
+
+##Interactive Features: Hover Information: Hovering over a country will display its name and emissions in a popup. Color Legend: A legend will show the distribution of emissions across countries.
+
+```{r}
+
+file_path <- "FAOSTAT_data.xlsx"
+emissions_data <- read_excel(file_path, sheet = "Worksheet")
+
+emissions_2019 <- emissions_data %>%
+  filter(grepl("Emissions \\(CO2eq\\)", Element)) %>%
+  select(Area, Y2019) %>%
+  rename(Total_Emissions_CO2eq = Y2019)
+
+geojson_file <- "world_countries.geojson"
+world_map <- st_read(geojson_file)
+
+map_data <- world_map %>%
+  left_join(emissions_2019, 
+            by = c("name" = "Area"))
+
+leaflet(map_data) %>%
+  addTiles() %>%
+  addPolygons(
+    fillColor = ~colorQuantile("YlOrRd", 
+                               Total_Emissions_CO2eq)(Total_Emissions_CO2eq),
+    color = "black", 
+    weight = 1, 
+    opacity = 1, 
+    fillOpacity = 0.7,
+    popup = ~paste("Country: ", 
+                   name, "<br>",
+                   "Total Emissions (kt CO2eq): ", 
+                   Total_Emissions_CO2eq)
+  ) %>%
+  addLegend(
+    pal = colorQuantile("YlOrRd",
+                        map_data$Total_Emissions_CO2eq),
+    values = map_data$Total_Emissions_CO2eq,
+    title = "GHG Emissions (kt CO2eq)",
+    position = "bottomright"
+  )
+
+```
