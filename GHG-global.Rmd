@@ -5,6 +5,12 @@ library(leaflet)
 library(readxl)
 ```
 
+## Plot Greenhouse gas emissions data in CO2 equivalent (CO2eq) units for each country in 2019
+
+##Coding Expalination: Data Preparation: The code filters the emissions data for CO2eq emissions in 2019. GeoJSON Loading: The geographical boundaries are loaded from a GeoJSON file. Data Merging: The emissions data is merged with the geographical boundaries. Interactive Map: leaflet is used to create an interactive map where the color represents the intensity of emissions.
+
+##Interactive Features: Hover Information: Hovering over a country will display its name and emissions in a popup. Color Legend: A legend will show the distribution of emissions across countries.
+
 ```{r}
 library(rnaturalearth)
 library(sf)
@@ -31,12 +37,6 @@ map_data <- world_map %>%
             left_join(emissions_data, by = c("country_column" = "Area"))
 
 ```
-
-##Plot Greenhouse gas emissions data in CO2 equivalent (CO2eq) units for each country in 2019
-
-##Coding Expalination: Data Preparation: The code filters the emissions data for CO2eq emissions in 2019. GeoJSON Loading: The geographical boundaries are loaded from a GeoJSON file. Data Merging: The emissions data is merged with the geographical boundaries. Interactive Map: leaflet is used to create an interactive map where the color represents the intensity of emissions.
-
-##Interactive Features: Hover Information: Hovering over a country will display its name and emissions in a popup. Color Legend: A legend will show the distribution of emissions across countries.
 
 ```{r}
 
