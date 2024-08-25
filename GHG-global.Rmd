@@ -1,3 +1,7 @@
+---
+bibliography: references.bib
+---
+
 ```{r}
 library(dplyr)
 library(ggplot2)
@@ -5,13 +9,16 @@ library(leaflet)
 library(readxl)
 ```
 
-## Plot Greenhouse gas emissions data in CO2 equivalent (CO2eq) units for each country in 2019
+## Plot Greenhouse gas emissions data in CO2 equivalent (CO2eq) units for each country in 2019 @usman2021
 
-##Coding Expalination: Data Preparation: The code filters the emissions data for CO2eq emissions in 2019. GeoJSON Loading: The geographical boundaries are loaded from a GeoJSON file. Data Merging: The emissions data is merged with the geographical boundaries. Interactive Map: leaflet is used to create an interactive map where the color represents the intensity of emissions.
+$\text{Indirect N}_2\text{O Emissions} = \text{N Applied} \times \text{Leaching/Runoff Fraction} \times \text{Emission Factor (N)}$
 
-##Interactive Features: Hover Information: Hovering over a country will display its name and emissions in a popup. Color Legend: A legend will show the distribution of emissions across countries.
+-   Coding Expalination: Data Preparation: The code filters the emissions data for CO2eq emissions in 2019. GeoJSON Loading: The geographical boundaries are loaded from a GeoJSON file. Data Merging: The emissions data is merged with the geographical boundaries. Interactive Map: leaflet is used to create an interactive map where the color represents the intensity of emissions.
+
+-   Interactive Features: Hover Information: Hovering over a country will display its name and emissions in a popup. Color Legend: A legend will show the distribution of emissions across countries !!.
 
 ```{r}
+
 library(rnaturalearth)
 library(sf)
 
@@ -26,13 +33,11 @@ st_write(world,
 ```
 
 ```{r}
-# Load spatial data (replace with your actual file path)
+# Load spatial data (replace with actual file path)
 world_map <- st_read("world_countries.geojson")
 
-# Assuming 'Area' column in emissions_data corresponds to country names
-emissions_data <- read_excel("FAOSTAT_data.xlsx")
+emissions_data <- read_excel("Global-emission.xlsx")
 
-# Join emissions data with spatial data
 map_data <- world_map %>%
             left_join(emissions_data, by = c("country_column" = "Area"))
 
@@ -40,7 +45,7 @@ map_data <- world_map %>%
 
 ```{r}
 
-file_path <- "FAOSTAT_data.xlsx"
+file_path <- "Global-emission.xlsx"
 emissions_data <- read_excel(file_path, sheet = "Worksheet")
 
 emissions_2019 <- emissions_data %>%
@@ -78,3 +83,82 @@ leaflet(map_data) %>%
   )
 
 ```
+
+------------------------------------------------------------------------
+
+## 🔥 The Hourly Heatmap (Better with many column data)
+
+The heatmap provides a clear visual representation of the CO2 emission trends across Southeast Asia, revealing the environmental impact of economic activities in the region. 😄😄
+
+```{r}
+
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(viridis)  
+library(ggtext)
+library(RColorBrewer)
+
+
+# List of Southeast Asian countries
+southeast_asia <- c("Brunei Darussalam", 
+                    "Cambodia", 
+                    "Indonesia", 
+                    "Malaysia", 
+                    "Myanmar", 
+                    "Philippines", 
+                    "Singapore", 
+                    "Thailand", 
+                    "Timor-Leste", 
+                    "Viet Nam")
+
+sea_emissions_data <- co2_emissions_long %>% filter(Area %in% southeast_asia)
+
+breaks <- c(0, 5e6, 1e7, 1.5e7)
+labels <- scales::scientific(breaks)
+
+ggplot(sea_emissions_data, aes(x = Year, 
+                               y = Area, 
+                               fill = Emissions)) +
+  
+  geom_tile(color = "white", size = 0.1) +  
+  scale_fill_gradientn(colors = rev(brewer.pal(9, "Spectral")), 
+                       na.value = "gray90", 
+                       breaks = breaks, labels = labels, 
+                       name = "Emissions (kt)") +   
+  theme_minimal(base_size = 15) +  
+  labs(title = 
+  "<span style='color:#e31a1c;'>CO2 Emissions</span> by Year in <b>Southeast Asia</b>",
+       x = NULL,
+       y = NULL) +  
+  theme(
+    axis.text.x = element_text(angle = 45, 
+                               vjust = 1, 
+                               hjust=1, 
+                               color = "gray20"),  
+    axis.text.y = element_text(size = 12, 
+                               color = "gray20"),  
+    plot.title = element_markdown(hjust = 0.5, 
+                                  size = 20, 
+                                  face = "bold"),  
+    panel.grid.major = element_blank(),  # Remove gridlines
+    panel.grid.minor = element_blank(),  # Remove minor gridlines
+    panel.background = element_blank(),  # Remove the background rectangle
+    plot.background = element_blank(),   # Remove the plot background rectangle
+    legend.position = "right"            # Position the legend on the right
+  )
+
+```
+
+The observed trends in CO2 emissions across Southeast Asia are closely linked to economic growth, energy consumption, and industrial activities. The region has undergone rapid development, particularly in the latter half of the 20th century, leading to increased fossil fuel consumption, deforestation, and urbanization—all key contributors to rising CO2 emissions
+
+**\
+Indonesia’s Role in Regional Emissions**
+
+:   Indonesia's dominant position in terms of emissions is partly due to its large-scale deforestation activities, particularly for palm oil production. Deforestation and peatland drainage release significant amounts of CO2, making Indonesia one of the largest greenhouse gas emitters in the region (World Resources Institute, 2020).
+
+Implication
+
+:   Despite the economic benefits of industrialization, the environmental costs are significant, highlighting the need for sustainable development practices, investment in renewable energy, and effective forest management policies (International Energy Agency, 2021; UNFCCC, 2020).
+
+------------------------------------------------------------------------
